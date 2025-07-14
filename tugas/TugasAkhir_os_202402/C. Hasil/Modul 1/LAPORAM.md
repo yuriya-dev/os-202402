@@ -7,9 +7,6 @@
 - **Nama**: Wahyu Tri Cahya
 - **NIM**: 240202889
 
-## Modul yang Dikerjakan: (Contoh: Modul 1 – System Call dan Instrumentasi Kernel)
-
-
 ---
 
 # 🔧 MODUL 1 — System Call dan Instrumentasi Kernel
@@ -124,7 +121,7 @@ Read Count Setelah: 5
 - Program `ptest` akan menampilkan semua proses aktif.
 - Program `rtest` akan membaca dari stdin, lalu menunjukkan apakah nilai `readcount` bertambah.
 
-Screenshot:
+### Screenshot:
 ![hasil cowtest](./screenshots/ptest_rtest_hello-outout.png)
 
 ---
