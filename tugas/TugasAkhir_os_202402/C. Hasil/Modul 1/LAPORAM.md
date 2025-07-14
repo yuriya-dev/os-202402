@@ -116,7 +116,7 @@ hello
 Read Count Setelah: 5
 ```
 
-### 3. Penjelasan:
+### Penjelasan:
 
 - Program `ptest` akan menampilkan semua proses aktif.
 - Program `rtest` akan membaca dari stdin, lalu menunjukkan apakah nilai `readcount` bertambah.
