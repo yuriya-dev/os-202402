@@ -10,6 +10,15 @@ struct sleeplock;
 struct stat;
 struct superblock;
 
+#define MAX_AUDIT 128
+
+struct audit_entry {
+  int pid;
+  int syscall_num;
+  int tick;
+};
+
+
 // bio.c
 void            binit(void);
 struct buf*     bread(uint, uint);

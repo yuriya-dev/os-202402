@@ -7,6 +7,11 @@
 #include "x86.h"
 #include "syscall.h"
 
+#define MAX_AUDIT 128
+
+struct audit_entry audit_log[MAX_AUDIT];
+int audit_index = 0;
+
 // User code makes a system call with INT T_SYSCALL.
 // System call number in %eax.
 // Arguments on the stack, from the user call to the C
@@ -103,6 +108,7 @@ extern int sys_unlink(void);
 extern int sys_wait(void);
 extern int sys_write(void);
 extern int sys_uptime(void);
+extern int sys_get_audit_log(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -126,6 +132,7 @@ static int (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
+[SYS_get_audit_log] sys_get_audit_log,
 };
 
 void
@@ -136,6 +143,12 @@ syscall(void)
 
   num = curproc->tf->eax;
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
+    if (audit_index < MAX_AUDIT) {
+      audit_log[audit_index].pid = curproc->pid;
+      audit_log[audit_index].syscall_num = num;
+      audit_log[audit_index].tick = ticks;
+      audit_index++;
+    }
     curproc->tf->eax = syscalls[num]();
   } else {
     cprintf("%d %s: unknown sys call %d\n",
@@ -143,3 +156,4 @@ syscall(void)
     curproc->tf->eax = -1;
   }
 }
+

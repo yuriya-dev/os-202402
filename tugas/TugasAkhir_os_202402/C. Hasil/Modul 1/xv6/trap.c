@@ -8,6 +8,8 @@
 #include "traps.h"
 #include "spinlock.h"
 
+extern struct proc *proc;
+
 // Interrupt descriptor table (shared by all CPUs).
 struct gatedesc idt[256];
 extern uint vectors[];  // in vectors.S: array of 256 entry pointers
@@ -36,6 +38,7 @@ idtinit(void)
 void
 trap(struct trapframe *tf)
 {
+  cprintf("Page fault at VA=0x%x EIP=0x%x proc=%s\n", rcr2(), tf->eip, myproc()->name);
   if(tf->trapno == T_SYSCALL){
     if(myproc()->killed)
       exit();
@@ -109,4 +112,42 @@ trap(struct trapframe *tf)
   // Check if the process has been killed since we yielded
   if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)
     exit();
+
+  // Tangani Page Fault T_PGFLT di trap.c
+  if(tf->trapno == T_PGFLT){
+    struct proc *curproc = myproc();
+    
+    if (curproc == 0) {
+      cprintf("Page fault with no current process\n");
+      panic("trap");
+    }
+
+    cprintf("trap %d addr %x eip %x pid %d\n", tf->trapno, rcr2(), tf->eip, curproc->pid);
+
+    uint va = rcr2();
+    pte_t *pte = walkpgdir(curproc->pgdir, (void*)va, 0);
+
+    if(!pte || !(*pte & PTE_P) || !(*pte & PTE_COW)){
+      cprintf("Invalid page fault at %x\n", va);
+      kill(curproc->pid);
+      return;
+    }
+
+    uint pa = PTE_ADDR(*pte);
+    char *mem = kalloc();
+    if(mem == 0){
+      cprintf("kalloc failed\n");
+      kill(curproc->pid);
+      return;
+    }
+
+    memmove(mem, (char*)P2V(pa), PGSIZE);
+    decref((char*)P2V(pa)); // free lama
+
+    *pte = V2P(mem) | PTE_W | PTE_U | PTE_P;
+    *pte &= ~PTE_COW;
+
+    lcr3(V2P(curproc->pgdir));
+    return;
+  }
 }

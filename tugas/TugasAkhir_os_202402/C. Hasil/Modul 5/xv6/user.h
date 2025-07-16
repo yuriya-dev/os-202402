@@ -1,6 +1,13 @@
 struct stat;
 struct rtcdate;
 
+struct audit_entry {
+  int pid;
+  int syscall_num;
+  int tick;
+};
+int get_audit_log(void *buf, int max);
+
 // system calls
 int fork(void);
 int exit(void) __attribute__((noreturn));

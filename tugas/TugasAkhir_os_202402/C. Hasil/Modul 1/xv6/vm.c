@@ -1,11 +1,70 @@
 #include "param.h"
 #include "types.h"
 #include "defs.h"
+int mappages(pde_t*, void*, uint, uint, int);
 #include "x86.h"
 #include "memlayout.h"
 #include "mmu.h"
 #include "proc.h"
 #include "elf.h"
+#include "spinlock.h"
+
+#define PHYSTOP 0xE000000
+#define NPAGE (PHYSTOP >> 12)  // Jumlah halaman fisik
+
+struct spinlock cowlock;
+
+int ref_count[NPAGE];  // Reference count tiap halaman
+struct spinlock cowlock;  // 🔒 Lock global untuk sinkronisasi reference count
+
+// 🔼 Tambahkan ini di vm.c
+void incref(char *pa) {
+  acquire(&cowlock);
+  ref_count[V2P(pa) >> 12]++;
+  release(&cowlock);
+}
+
+void decref(char *pa) {
+  acquire(&cowlock);
+  int idx = V2P(pa) >> 12;
+  if (--ref_count[idx] == 0) {
+    release(&cowlock);
+    kfree(pa);
+    return;
+  }
+  release(&cowlock);
+}
+
+// Fungsi cowuvm
+pde_t* cowuvm(pde_t *pgdir, uint sz) {
+  pde_t *d = setupkvm();
+  if(d == 0)
+    return 0;
+
+  for(uint i = 0; i < sz; i += PGSIZE){
+    pte_t *pte = walkpgdir(pgdir, (void*)i, 0);
+    if(!pte || !(*pte & PTE_P))
+      continue;
+
+    uint pa = PTE_ADDR(*pte);
+    char *v = P2V(pa);
+    uint flags = PTE_FLAGS(*pte);
+
+    flags &= ~PTE_W;     // Hapus hak tulis
+    flags |= PTE_COW;    // Tandai sebagai CoW
+
+    incref(v);
+
+    if(mappages(d, (void*)i, PGSIZE, pa, flags) < 0){
+      freevm(d);
+      return 0;
+    }
+
+    // *pte = (*pte & ~PTE_W) | PTE_COW;
+  }
+  return d;
+}
+
 
 extern char data[];  // defined by kernel.ld
 pde_t *kpgdir;  // for use in scheduler()
@@ -32,7 +91,7 @@ seginit(void)
 // Return the address of the PTE in page table pgdir
 // that corresponds to virtual address va.  If alloc!=0,
 // create any required page table pages.
-static pte_t *
+pte_t *
 walkpgdir(pde_t *pgdir, const void *va, int alloc)
 {
   pde_t *pde;
@@ -57,7 +116,7 @@ walkpgdir(pde_t *pgdir, const void *va, int alloc)
 // Create PTEs for virtual addresses starting at va that refer to
 // physical addresses starting at pa. va and size might not
 // be page-aligned.
-static int
+int
 mappages(pde_t *pgdir, void *va, uint size, uint pa, int perm)
 {
   char *a, *last;

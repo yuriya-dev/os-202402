@@ -12,6 +12,9 @@ struct {
   struct proc proc[NPROC];
 } ptable;
 
+// Global pointer ke proses saat ini
+struct proc *proc = 0;
+
 static struct proc *initproc;
 
 int nextpid = 1;
@@ -87,6 +90,7 @@ allocproc(void)
 
 found:
   p->state = EMBRYO;
+  p->priority = 60; // nilai default ➕ M2
   p->pid = nextpid++;
 
   release(&ptable.lock);
@@ -190,7 +194,7 @@ fork(void)
   }
 
   // Copy process state from proc.
-  if((np->pgdir = copyuvm(curproc->pgdir, curproc->sz)) == 0){
+  if((np->pgdir = cowuvm(curproc->pgdir, curproc->sz)) == 0){
     kfree(np->kstack);
     np->kstack = 0;
     np->state = UNUSED;
@@ -319,41 +323,45 @@ wait(void)
 //  - swtch to start running that process
 //  - eventually that process transfers control
 //      via swtch back to the scheduler.
+
+// ➕ START Modifikasi Fungsi scheduler() (M2)
+extern struct cpu *cpu; // ➕ Tambahan
+extern struct proc *proc; // ➕ Tambahan
+
 void
 scheduler(void)
 {
   struct proc *p;
-  struct cpu *c = mycpu();
-  c->proc = 0;
-  
-  for(;;){
-    // Enable interrupts on this processor.
-    sti();
+  struct proc *highest = 0;
+  struct cpu *c = mycpu(); // ➕
 
-    // Loop over process table looking for process to run.
+  for(;;){
+    sti();
     acquire(&ptable.lock);
+
+    highest = 0;
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
+      if(highest == 0 || p->priority < highest->priority)
+        highest = p;
+    }
 
-      // Switch to chosen process.  It is the process's job
-      // to release ptable.lock and then reacquire it
-      // before jumping back to us.
+    if(highest != 0){
+      p = highest;
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
-
-      swtch(&(c->scheduler), p->context);
+      swtch(&c->scheduler, p->context);
       switchkvm();
-
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
       c->proc = 0;
     }
-    release(&ptable.lock);
 
+    release(&ptable.lock);
   }
 }
+
+// 🔴END Modifikasi Fungsi scheduler() (M1)
 
 // Enter scheduler.  Must hold only ptable.lock
 // and have changed proc->state. Saves and restores

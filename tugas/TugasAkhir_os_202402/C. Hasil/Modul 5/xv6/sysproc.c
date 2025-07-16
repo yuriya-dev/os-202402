@@ -7,6 +7,25 @@
 #include "mmu.h"
 #include "proc.h"
 
+extern struct audit_entry audit_log[];
+extern int audit_index;
+
+int sys_get_audit_log(void) {
+  char *buf;
+  int max;
+
+  if (argptr(0, &buf, sizeof(struct audit_entry) * MAX_AUDIT) < 0 || argint(1, &max) < 0)
+    return -1;
+
+  if (myproc()->pid != 1)
+    return -1; // hanya PID 1 (init) yang boleh akses audit log
+
+  int n = (audit_index < max) ? audit_index : max;
+  memmove(buf, audit_log, n * sizeof(struct audit_entry));
+
+  return n;
+}
+
 int
 sys_fork(void)
 {
