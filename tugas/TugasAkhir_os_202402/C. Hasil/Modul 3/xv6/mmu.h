@@ -1,3 +1,6 @@
+#ifndef XV6_MMU_H
+#define XV6_MMU_H
+
 // This file contains definitions for the
 // x86 memory management unit (MMU).
 
@@ -95,6 +98,7 @@ struct segdesc {
 #define PTE_W           0x002   // Writeable
 #define PTE_U           0x004   // User
 #define PTE_PS          0x080   // Page Size
+#define PTE_COW 0x200  // custom flag untuk CoW
 
 // Address in page table or page directory entry
 #define PTE_ADDR(pte)   ((uint)(pte) & ~0xFFF)
@@ -179,3 +183,4 @@ struct gatedesc {
 }
 
 #endif
+#endif // XV6_MMU_H
