@@ -1,6 +1,7 @@
 OBJS = \
 	bio.o\
 	console.o\
+	random.o \
 	exec.o\
 	file.o\
 	fs.o\
@@ -181,6 +182,8 @@ UPROGS=\
 	_usertests\
 	_wc\
 	_zombie\
+	_chmodtest\
+	_randomtest\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)

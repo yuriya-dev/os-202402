@@ -16,6 +16,29 @@
 #include "file.h"
 #include "fcntl.h"
 
+int sys_chmod(void) {
+  char *path;
+  int mode;
+  struct inode *ip;
+
+  if(argstr(0, &path) < 0 || argint(1, &mode) < 0)
+    return -1;
+
+  begin_op();
+  if((ip = namei(path)) == 0){
+    end_op();
+    return -1;
+  }
+
+  ilock(ip);
+  ip->mode = mode;     // set field mode inode
+  iupdate(ip);         // simpan ke disk (opsional)
+  iunlock(ip);
+  end_op();
+
+  return 0;
+}
+
 // Fetch the nth word-sized system call argument as a file descriptor
 // and return both the descriptor and the corresponding struct file.
 static int

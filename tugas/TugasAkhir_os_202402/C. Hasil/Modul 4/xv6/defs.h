@@ -21,6 +21,8 @@ void            consoleinit(void);
 void            cprintf(char*, ...);
 void            consoleintr(int(*)(void));
 void            panic(char*) __attribute__((noreturn));
+int consoleread(struct inode*, char*, int);
+int consolewrite(struct inode*, char*, int);
 
 // exec.c
 int             exec(char*, char**);

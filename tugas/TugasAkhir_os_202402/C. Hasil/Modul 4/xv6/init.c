@@ -19,6 +19,11 @@ main(void)
   dup(0);  // stdout
   dup(0);  // stderr
 
+  // Corrected mknod call for /dev/random:
+  // Major number MUST be 3 to match devsw[3]
+  // Minor number can be 0 for a simple device like this
+  mknod("random", 3, 0); // Corrected: path="/dev/random" (mknod automatically adds /dev/), major=3, minor=0
+
   for(;;){
     printf(1, "init: starting sh\n");
     pid = fork();
@@ -34,4 +39,5 @@ main(void)
     while((wpid=wait()) >= 0 && wpid != pid)
       printf(1, "zombie!\n");
   }
+
 }
