@@ -1,3 +1,5 @@
+#include "mmu.h"
+
 struct buf;
 struct context;
 struct file;
@@ -164,6 +166,7 @@ void            idtinit(void);
 extern uint     ticks;
 void            tvinit(void);
 extern struct spinlock tickslock;
+extern struct spinlock cowlock;
 
 // uart.c
 void            uartinit(void);
@@ -181,6 +184,11 @@ void            freevm(pde_t*);
 void            inituvm(pde_t*, char*, uint);
 int             loaduvm(pde_t*, char*, struct inode*, uint, uint);
 pde_t*          copyuvm(pde_t*, uint);
+pde_t*          cowuvm(pde_t *pgdir, uint sz);
+pte_t* walkpgdir(pde_t *pgdir, const void *va, int alloc);
+int mappages(pde_t*, void*, uint, uint, int);
+void incref(char*);
+void decref(char *pa);
 void            switchuvm(struct proc*);
 void            switchkvm(void);
 int             copyout(pde_t*, uint, void*, uint);

@@ -20,3 +20,6 @@
 #define SYS_link   19
 #define SYS_mkdir  20
 #define SYS_close  21
+#define SYS_getpinfo     22 // ➕ M1
+#define SYS_getreadcount 23 // ➕ M1
+#define SYS_set_priority 24 // ➕ M2

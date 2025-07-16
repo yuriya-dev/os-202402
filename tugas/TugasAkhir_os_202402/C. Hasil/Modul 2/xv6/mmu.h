@@ -1,3 +1,7 @@
+#ifndef MMU_H
+#define MMU_H
+
+#define PTE_COW 0x200  // Flag baru untuk Copy-on-Write
 // This file contains definitions for the
 // x86 memory management unit (MMU).
 
@@ -20,6 +24,7 @@
 
 // cpu->gdt[NSEGS] holds the above segments.
 #define NSEGS     6
+
 
 #ifndef __ASSEMBLER__
 // Segment Descriptor
@@ -179,3 +184,4 @@ struct gatedesc {
 }
 
 #endif
+#endif // MMU_H
