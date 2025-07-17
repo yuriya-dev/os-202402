@@ -7,10 +7,23 @@
 #include "proc.h"
 #include "elf.h"
 
-#define PHYSTOP 0xE000000   // default xv6
+// Mdoul 3B
+struct shmregion {
+  int key;
+  char *frame;
+  int refcount;
+};
+
+#define MAX_SHM 16
+struct shmregion shmtab[MAX_SHM];
+
+// Mdoul 3B
+
+// Mdoul 3A
+#define PHYSTOP 0xE000000
 #define NPAGE (PHYSTOP >> 12)
 
-int ref_count[NPAGE];  // satu counter per halaman fisik
+int ref_count[NPAGE];
 
 void incref(char *pa) {
   ref_count[V2P(pa) >> 12]++;
@@ -21,7 +34,7 @@ void decref(char *pa) {
   if (--ref_count[idx] == 0)
     kfree(pa);
 }
-
+//Modul M3A
 
 extern char data[];  // defined by kernel.ld
 pde_t *kpgdir;  // for use in scheduler()
@@ -48,7 +61,7 @@ seginit(void)
 // Return the address of the PTE in page table pgdir
 // that corresponds to virtual address va.  If alloc!=0,
 // create any required page table pages.
-pte_t *
+pte_t * // Hapus static
 walkpgdir(pde_t *pgdir, const void *va, int alloc)
 {
   pde_t *pde;
@@ -60,6 +73,7 @@ walkpgdir(pde_t *pgdir, const void *va, int alloc)
   } else {
     if(!alloc || (pgtab = (pte_t*)kalloc()) == 0)
       return 0;
+    incref((char*)pgtab); // Tambahkan ini
     // Make sure all those PTE_P bits are zero.
     memset(pgtab, 0, PGSIZE);
     // The permissions here are overly generous, but they can
@@ -73,7 +87,7 @@ walkpgdir(pde_t *pgdir, const void *va, int alloc)
 // Create PTEs for virtual addresses starting at va that refer to
 // physical addresses starting at pa. va and size might not
 // be page-aligned.
-static int
+int // hapus static
 mappages(pde_t *pgdir, void *va, uint size, uint pa, int perm)
 {
   char *a, *last;
@@ -139,6 +153,7 @@ setupkvm(void)
 
   if((pgdir = (pde_t*)kalloc()) == 0)
     return 0;
+  incref((char*)pgdir); // Tambakan ini
   memset(pgdir, 0, PGSIZE);
   if (P2V(PHYSTOP) > (void*)DEVSPACE)
     panic("PHYSTOP too high");
@@ -203,8 +218,6 @@ inituvm(pde_t *pgdir, char *init, uint sz)
   if(sz >= PGSIZE)
     panic("inituvm: more than a page");
   mem = kalloc();
-  if(mem == 0) panic("inituvm: kalloc failed");
-  incref(mem);
   memset(mem, 0, PGSIZE);
   mappages(pgdir, 0, PGSIZE, V2P(mem), PTE_W|PTE_U);
   memmove(mem, init, sz);
@@ -255,12 +268,14 @@ allocuvm(pde_t *pgdir, uint oldsz, uint newsz)
       deallocuvm(pgdir, newsz, oldsz);
       return 0;
     }
-    incref(mem);
+
+    incref(mem); // tambahkan ini
+
     memset(mem, 0, PGSIZE);
     if(mappages(pgdir, (char*)a, PGSIZE, V2P(mem), PTE_W|PTE_U) < 0){
       cprintf("allocuvm out of memory (2)\n");
       deallocuvm(pgdir, newsz, oldsz);
-      decref(mem);
+      decref(mem); // kfree -> decref
       return 0;
     }
   }
@@ -288,9 +303,9 @@ deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
     else if((*pte & PTE_P) != 0){
       pa = PTE_ADDR(*pte);
       if(pa == 0)
-        panic("kfree");
+        panic("decref"); // kfree -> decref
       char *v = P2V(pa);
-      kfree(v);
+      decref(v); // kfree -> decref
       *pte = 0;
     }
   }
@@ -310,10 +325,10 @@ freevm(pde_t *pgdir)
   for(i = 0; i < NPDENTRIES; i++){
     if(pgdir[i] & PTE_P){
       char * v = P2V(PTE_ADDR(pgdir[i]));
-      decref(v);
+      decref(v); // kfree -> decref
     }
   }
-  decref((char*)pgdir); // menggantikan kfree((char*)pgdir);
+  decref((char*)pgdir); // kfree -> decref
 }
 
 // Clear PTE_U on a page. Used to create an inaccessible
@@ -331,6 +346,7 @@ clearpteu(pde_t *pgdir, char *uva)
 
 // Given a parent process's page table, create a copy
 // of it for a child.
+// M3A
 pde_t* cowuvm(pde_t *pgdir, uint sz) {
   pde_t *d = setupkvm();
   if(d == 0)
@@ -342,25 +358,27 @@ pde_t* cowuvm(pde_t *pgdir, uint sz) {
       continue;
 
     uint pa = PTE_ADDR(*pte);
+    char *v = P2V(pa);
     uint flags = PTE_FLAGS(*pte);
 
     // Hilangkan flag tulis, tambahkan COW
     flags &= ~PTE_W;
     flags |= PTE_COW;
 
-    incref((char*)P2V(pa));  // pastikan incref kamu terima P2V(pa)
+    // Tambah refcount
+    incref(v);
 
     if(mappages(d, (void*)i, PGSIZE, pa, flags) < 0){
       freevm(d);
       return 0;
     }
 
-    // ❗ Hapus modifikasi parent:
-    // *pte = (*pte & ~PTE_W) | PTE_COW;
+    *pte = (*pte & ~PTE_W) | PTE_COW;
   }
-
   return d;
 }
+
+// M3A
 
 //PAGEBREAK!
 // Map user virtual address to kernel address.

@@ -7,6 +7,75 @@
 #include "mmu.h"
 #include "proc.h"
 
+extern struct {
+  int key;
+  char *frame;
+  int refcount;
+} shmtab[];
+
+#define MAX_SHM 16
+#define USERTOP 0xA0000  // 640KB typical user top in xv6
+
+// extern struct shmregion shmtab[];
+extern struct proc *proc;
+
+extern int mappages(pde_t*, void*, uint, uint, int);
+
+void* sys_shmget(void) {
+  int key;
+  if(argint(0, &key) < 0)
+    return (void*)-1;
+
+  for(int i = 0; i < MAX_SHM; i++){
+    if(shmtab[i].key == key){
+      shmtab[i].refcount++;
+      struct proc *p = myproc();
+      mappages(p->pgdir,
+         (void*)(USERTOP - (i+1)*PGSIZE),
+         PGSIZE,
+         V2P(shmtab[i].frame),
+         PTE_W | PTE_U);
+      return (void*)(USERTOP - (i+1)*PGSIZE);
+    }
+  }
+
+  for(int i = 0; i < MAX_SHM; i++){
+    if(shmtab[i].key == 0){
+      shmtab[i].key = key;
+      shmtab[i].frame = kalloc();
+      if (shmtab[i].frame == 0)
+        return (void*)-1;
+      shmtab[i].refcount = 1;
+      memset(shmtab[i].frame, 0, PGSIZE);
+      struct proc *p = myproc();
+      mappages(p->pgdir, (char*)(USERTOP - (i+1)*PGSIZE), PGSIZE,
+               V2P(shmtab[i].frame), PTE_W|PTE_U);
+      return (void*)(USERTOP - (i+1)*PGSIZE);
+    }
+  }
+
+  return (void*)-1;
+}
+
+int sys_shmrelease(void) {
+  int key;
+  if(argint(0, &key) < 0)
+    return -1;
+
+  for(int i = 0; i < MAX_SHM; i++){
+    if(shmtab[i].key == key){
+      shmtab[i].refcount--;
+      if(shmtab[i].refcount == 0){
+        kfree(shmtab[i].frame);
+        shmtab[i].key = 0;
+        shmtab[i].frame = 0;
+      }
+      return 0;
+    }
+  }
+  return -1;
+}
+
 int
 sys_fork(void)
 {

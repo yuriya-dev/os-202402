@@ -8,8 +8,6 @@
 #include "traps.h"
 #include "spinlock.h"
 
-extern struct proc *proc;
-
 // Interrupt descriptor table (shared by all CPUs).
 struct gatedesc idt[256];
 extern uint vectors[];  // in vectors.S: array of 256 entry pointers
@@ -38,41 +36,35 @@ idtinit(void)
 void
 trap(struct trapframe *tf)
 {
-if(tf->trapno == T_PGFLT){
-  uint va = rcr2();  // ambil alamat fault
-  pte_t *pte = walkpgdir(myproc()->pgdir, (void*)va, 0);
-
-  if(!pte || !(*pte & PTE_P)){
-    cprintf("Invalid page fault at %x\n", va);
-    kill(myproc()->pid);
+  if(tf->trapno == T_PGFLT){
+    uint va = rcr2();
+    struct proc *p = myproc();
+    pte_t *pte = walkpgdir(p->pgdir, (void*)va, 0);
+  
+    if(!pte || !(*pte & PTE_P) || !(*pte & PTE_COW)){
+      cprintf("Invalid page fault at %x\n", va);
+      kill(p->pid);
+      return;
+    }
+  
+    uint pa = PTE_ADDR(*pte);
+    char *mem = kalloc();
+    if(mem == 0){
+      cprintf("kalloc failed\n");
+      kill(p->pid);
+      return;
+    }
+  
+    memmove(mem, (char*)P2V(pa), PGSIZE);
+    decref((char*)P2V(pa));
+  
+    *pte = V2P(mem) | PTE_W | PTE_U | PTE_P;
+    *pte &= ~PTE_COW;
+  
+    lcr3(V2P(p->pgdir)); // Flush TLB
     return;
   }
-
-  if(!(*pte & PTE_COW)){
-    cprintf("Non-COW page fault at %x\n", va);
-    kill(myproc()->pid);
-    return;
-  }
-
-  // Copy halaman
-  uint pa = PTE_ADDR(*pte);
-  char *mem = kalloc();
-  if(mem == 0){
-    cprintf("Out of memory in COW\n");
-    kill(myproc()->pid);
-    return;
-  }
-
-  memmove(mem, (char*)P2V(pa), PGSIZE);
-
-  // Update PTE: beri akses tulis dan hapus PTE_COW
-  *pte = V2P(mem) | PTE_P | PTE_U | PTE_W;
-
-  lcr3(V2P(myproc()->pgdir)); // reload CR3
-  decref((char*)P2V(pa));
-  return;
-}
-
+  
   if(tf->trapno == T_SYSCALL){
     if(myproc()->killed)
       exit();
@@ -146,4 +138,6 @@ if(tf->trapno == T_PGFLT){
   // Check if the process has been killed since we yielded
   if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)
     exit();
+
+
 }
