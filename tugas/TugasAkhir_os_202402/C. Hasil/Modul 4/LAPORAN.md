@@ -41,7 +41,7 @@ Saya mengimplementasikan dua fitur penting dalam kernel XV6:
 
 ---
 
-## 🧩 System Call `chmod(path, mode)`
+## Bagian A – System Call chmod()
 
 ### Penambahan ke `inode`:
 
@@ -105,10 +105,19 @@ int main() {
   exit();
 }
 ```
+## ✅ Output Diharapkan
+
+```bash
+$ chmodtest
+Write blocked as expected
+
+```
+### 📸 Screenshot:
+![hasil chmodtest](./screenshot/chmodtest.png)
 
 ---
 
-## 🔀 Driver `/dev/random`
+## Bagian B – Device Pseudo /dev/random
 
 ### Struktur `randomread`:
 
@@ -133,7 +142,7 @@ int randomread(struct inode *ip, char *dst, int n) {
 ### Tambahkan node device:
 
 ```c
-mknod("/dev/random", 1, 3);
+mknod("/random", 3, 0);
 ```
 
 ---
@@ -143,7 +152,7 @@ mknod("/dev/random", 1, 3);
 ```c
 int main() {
   char buf[8];
-  int fd = open("/dev/random", 0);
+  int fd = open("/random", 0);
   if(fd < 0){
     printf(1, "cannot open /dev/random\n");
     exit();
@@ -163,32 +172,34 @@ int main() {
 
 ## ✅ Output Diharapkan
 
-```bash
-$ chmodtest
-Write blocked as expected
-
 ```
-### 📸 Screenshot:
-![hasil ptest](./screenshot/chmodtest.png)
-```
-
 $ randomtest
 201 45 132 88 2 79 234 11
 ```
 ### 📸 Screenshot:
-![hasil ptest](./screenshot/randomtest_1.png)
+![hasil randomtest](./screenshot/randomtest_1.png)
 
 ---
 
-## 📊 Analisis dan Refleksi
+## ⚠️ Kendala yang Dihadapi
 
-- System call `chmod()` berhasil memodifikasi inode dan menolak akses `write` sesuai mode.
-- Driver `/dev/random` bekerja sebagai pseudo-device sederhana tanpa blocking.
-- Tantangan yang dihadapi:
-  - Konflik definisi `struct inode` di `fs.h` saat `mkfs` build → diselesaikan dengan memisahkan `inode.h`.
-  - Error dependensi melingkar antar header (`sleeplock`, `spinlock`) → diselesaikan dengan header guard dan include urut.
+Selama implementasi, beberapa kendala teknis yang cukup menantang berhasil diatasi, di antaranya:
 
-Modul ini memperluas pemahaman terhadap pembuatan device driver dan pengelolaan metadata file melalui system call di kernel.
+1. **short mode; Seharusnya berada di file.h**  
+   inode tidak berada di fs.h
+   ✅ Solusi: Menambahkan `short mode;` di `struct inode` pada file.h.
+
+2. **Redefinisi dan dependensi melingkar `struct sleeplock` dan `spinlock`**  
+   Gagal build akibat duplikasi definisi dari header yang saling meng-include satu sama lain.  
+   ✅ Solusi: Gunakan include guard (`#ifndef/#define`) dan atur urutan `#include` secara ketat.
+
+3. **Registrasi driver `randomread` tidak terdeteksi**  
+   Kompilasi gagal karena `randomread` tidak dideklarasikan saat `file.c` dibangun.  
+   ✅ Solusi: Tambahkan deklarasi `extern int randomread(...);` sebelum array `devsw[]`.
+
+4. **Device `/dev/random` gagal dibuat**  
+   Fungsi `mknod()` gagal digunakan karena belum dikenali.  
+   ✅ Solusi: Pastikan `mknod("/random", 3, 0);` ditambahkan di `init.c` dengan urutan benar.
 
 ---
 
