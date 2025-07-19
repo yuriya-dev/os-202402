@@ -174,7 +174,7 @@ $ randomtest
 201 45 132 88 2 79 234 11
 ```
 ### 📸 Screenshot:
-![hasil ptest](./screenshot/randomtest.png)
+![hasil ptest](./screenshot/randomtest_1.png)
 
 ---
 
