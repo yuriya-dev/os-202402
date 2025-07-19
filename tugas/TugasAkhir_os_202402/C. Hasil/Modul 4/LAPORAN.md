@@ -167,8 +167,10 @@ int main() {
 $ chmodtest
 Write blocked as expected
 
+```
 ### 📸 Screenshot:
 ![hasil ptest](./screenshot/chmodtest.png)
+```
 
 $ randomtest
 201 45 132 88 2 79 234 11
