@@ -186,18 +186,18 @@ $ randomtest
 Selama implementasi, beberapa kendala teknis yang cukup menantang berhasil diatasi, di antaranya:
 
 1. **short mode; Seharusnya berada di file.h**  
-   inode tidak berada di fs.h
+   inode tidak berada di fs.h.
    ✅ Solusi: Menambahkan `short mode;` di `struct inode` pada file.h.
 
-2. **Redefinisi dan dependensi melingkar `struct sleeplock` dan `spinlock`**  
+3. **Redefinisi dan dependensi melingkar `struct sleeplock` dan `spinlock`**  
    Gagal build akibat duplikasi definisi dari header yang saling meng-include satu sama lain.  
    ✅ Solusi: Gunakan include guard (`#ifndef/#define`) dan atur urutan `#include` secara ketat.
 
-3. **Registrasi driver `randomread` tidak terdeteksi**  
+4. **Registrasi driver `randomread` tidak terdeteksi**  
    Kompilasi gagal karena `randomread` tidak dideklarasikan saat `file.c` dibangun.  
    ✅ Solusi: Tambahkan deklarasi `extern int randomread(...);` sebelum array `devsw[]`.
 
-4. **Device `/dev/random` gagal dibuat**  
+5. **Device `/dev/random` gagal dibuat**  
    Fungsi `mknod()` gagal digunakan karena belum dikenali.  
    ✅ Solusi: Pastikan `mknod("/random", 3, 0);` ditambahkan di `init.c` dengan urutan benar.
 
