@@ -9,6 +9,7 @@ void busy() {
 int main() {
   int pid1 = fork();
   if (pid1 == 0) {
+    sleep(1);  // 🔁 Delay sedikit agar Child 2 bisa masuk lebih dulu
     set_priority(90); // prioritas rendah
     busy();
     printf(1, "Child 1 selesai\n");
