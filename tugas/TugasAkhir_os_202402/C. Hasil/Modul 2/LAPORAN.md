@@ -55,8 +55,6 @@ Parent selesai
 | Masalah                                      | Solusi                                                                                          |
 | -------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | `proc` / `cpu` tidak dikenal di `scheduler()`| Tambahkan `extern struct cpu *cpu;` dan gunakan `mycpu()` untuk akses CPU                      |
-| Tipe `lock` tidak lengkap                    | Tambahkan `#include "spinlock.h"` pada `proc.h`                                                 |
-| `main` terduplikasi di `ptest.c`             | Gabungkan pengujian dalam satu `main()` dengan pemilihan via `argv[1]`                         |
 | Proses prioritas rendah tetap jalan duluan   | Tambahkan `sleep(1)` agar proses prioritas tinggi sempat masuk ke scheduler lebih dahulu       |
 
 ---
