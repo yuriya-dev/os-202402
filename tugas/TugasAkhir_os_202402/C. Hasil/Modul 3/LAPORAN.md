@@ -5,14 +5,14 @@
 **Nama**: Wahyu Tri Cahya  
 **NIM**: 240202889  
 **Modul yang Dikerjakan**:  
-Modul 5 – Manajemen Memori Lanjutan  
+Modul 3 – Manajemen Memori Lanjutan  
 (A. Copy-on-Write Fork, B. Shared Memory ala System V)
 
 ---
 
 ## 📌 Deskripsi Singkat Tugas
 
-Tugas ini merupakan bagian dari Modul 5, yang berfokus pada implementasi fitur manajemen memori tingkat lanjut pada sistem operasi xv6, meliputi:
+Tugas ini merupakan bagian dari Modul 3, yang berfokus pada implementasi fitur manajemen memori tingkat lanjut pada sistem operasi xv6, meliputi:
 
 - **A. Copy-on-Write (CoW) Fork**:  
   Mengoptimalkan `fork()` agar tidak langsung menggandakan seluruh memori anak, melainkan menyalin halaman hanya saat proses menulis ke halaman tersebut.
