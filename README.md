@@ -6,11 +6,11 @@ Repositori ini berisi shortcut menuju laporan Tugas Akhir Praktikum Sistem Opera
 
 | Modul       | Path                                                                                                                   |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------- |
-| **Modul 1** | [tugas/TugasAkhir\_os\_202402/C. Hasil/Modul 1/LAPORAN.md](tugas/TugasAkhir_os_202402/C.%20Hasil/Modul%201/LAPORAN.md) |
-| **Modul 2** | [tugas/TugasAkhir\_os\_202402/C. Hasil/Modul 2/LAPORAN.md](tugas/TugasAkhir_os_202402/C.%20Hasil/Modul%202/LAPORAN.md) |
-| **Modul 3** | [tugas/TugasAkhir\_os\_202402/C. Hasil/Modul 3/LAPORAN.md](tugas/TugasAkhir_os_202402/C.%20Hasil/Modul%203/LAPORAN.md) |
-| **Modul 4** | [tugas/TugasAkhir\_os\_202402/C. Hasil/Modul 4/LAPORAN.md](tugas/TugasAkhir_os_202402/C.%20Hasil/Modul%204/LAPORAN.md) |
-| **Modul 5** | [tugas/TugasAkhir\_os\_202402/C. Hasil/Modul 5/LAPORAN.md](tugas/TugasAkhir_os_202402/C.%20Hasil/Modul%205/LAPORAN.md) |
+| **Modul 1** | [LAPORAN MODUL 1](tugas/TugasAkhir_os_202402/C.%20Hasil/Modul%201/LAPORAN.md) |
+| **Modul 2** | [LAPORAN MODUL 2](tugas/TugasAkhir_os_202402/C.%20Hasil/Modul%202/LAPORAN.md) |
+| **Modul 3** | [LAPORAN MODUL 3](tugas/TugasAkhir_os_202402/C.%20Hasil/Modul%203/LAPORAN.md) |
+| **Modul 4** | [LAPORAN MODUL 4](tugas/TugasAkhir_os_202402/C.%20Hasil/Modul%204/LAPORAN.md) |
+| **Modul 5** | [LAPORAN MODUL 5](tugas/TugasAkhir_os_202402/C.%20Hasil/Modul%205/LAPORAN.md) |
 
 ## Deskripsi Singkat Modul
 
