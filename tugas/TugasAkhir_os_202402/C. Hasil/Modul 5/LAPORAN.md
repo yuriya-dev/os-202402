@@ -55,7 +55,6 @@ Modul 5 – Audit dan Keamanan Sistem
 * Validasi PID di syscall `get_audit_log()` agar hanya proses `init` yang dapat mengakses log
 * Penanganan pointer user-space menggunakan `argptr()` dan `memmove()`
 * Menjaga proses `init` tetap hidup (menggunakan `sleep()` terus-menerus) agar kernel tidak panic
-* Menambahkan audit sebelum syscall dijalankan namun tetap aman dari error
 
 ---
 
